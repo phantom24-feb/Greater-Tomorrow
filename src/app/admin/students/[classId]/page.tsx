@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/server";
-import StudentRosterTable, {
-  type RosterStudent,
-} from "@/components/admin/StudentRosterTable";
+import type { RosterStudent } from "@/components/admin/StudentRosterTable";
+
+const StudentRosterTable = dynamic(
+  () => import("@/components/admin/StudentRosterTable"),
+);
 
 export default async function ClassStudentsPage({
   params,

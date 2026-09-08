@@ -47,7 +47,7 @@ export default function SplashScreen({ children }: SplashScreenProps) {
             fadeOut ? "opacity-0" : "opacity-100"
           }`}
         >
-          {/* Replace with an <img> of the real school crest/logo */}
+          {/* Replace the placeholder with the real school crest/logo when available. */}
           <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-white/40 font-display text-2xl font-semibold text-white">
             GS
           </div>

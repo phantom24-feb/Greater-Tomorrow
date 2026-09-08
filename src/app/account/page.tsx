@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 
 interface Guardian {
@@ -90,10 +91,11 @@ export default async function AccountPage() {
     <div className="mx-auto max-w-[700px] px-6 py-10">
       <div className="mb-7 flex items-center gap-4">
         {student.photo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={student.photo_url}
             alt={student.first_name}
+            width={64}
+            height={64}
             className="h-16 w-16 rounded-full object-cover"
           />
         ) : (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { generateAdmissionNumber } from "@/lib/student/generateAdmissionNumber";
 
@@ -181,10 +182,11 @@ export default function AdminRegistrationsPage() {
             className="flex gap-4 rounded-md border border-bordersoft bg-white p-5"
           >
             {reg.photo_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={reg.photo_url}
                 alt={`${reg.first_name} ${reg.last_name}`}
+                width={64}
+                height={64}
                 className="h-16 w-16 flex-shrink-0 rounded-full object-cover"
               />
             ) : (

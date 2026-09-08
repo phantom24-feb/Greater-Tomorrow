@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import PublicHeader from "@/components/layout/PublicHeader";
 import { createClient } from "@/lib/supabase/client";
 import { compressAndUploadImage } from "@/lib/storage/uploadImage";
@@ -378,10 +379,12 @@ export default function RegisterPage() {
               </label>
               <div className="flex items-center gap-4">
                 {photoPreview && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={photoPreview}
                     alt="Preview"
+                    width={64}
+                    height={64}
+                    unoptimized
                     className="h-16 w-16 rounded-full object-cover"
                   />
                 )}

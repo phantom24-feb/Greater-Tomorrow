@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getLatestAnnouncement } from "@/lib/data/public";
 import { createClient } from "@/lib/supabase/server";
 import PublicHeader from "@/components/layout/PublicHeader";
 
@@ -111,12 +112,7 @@ export default async function HomeContent() {
     data: { session },
   } = await supabase.auth.getSession();
   const user = session?.user;
-  const { data: latestAnnouncement } = await supabase
-    .from("announcements")
-    .select("id, title, created_at")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const latestAnnouncement = await getLatestAnnouncement();
 
   return (
     <div className="bg-white text-ink">

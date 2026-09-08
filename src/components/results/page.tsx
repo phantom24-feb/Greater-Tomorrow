@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation";
+import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/server";
-import ResultsView from "@/components/results/ResultsView";
+import type { ComponentProps } from "react";
+
+const ResultsView = dynamic(() => import("@/components/results/ResultsView"));
+type ResultRow = ComponentProps<typeof ResultsView>["results"][number];
 
 export default async function ResultsPage() {
   const supabase = await createClient();
@@ -42,7 +46,7 @@ export default async function ResultsPage() {
       className={
         (student.classes as { name: string }[] | null)?.[0]?.name ?? "—"
       }
-      results={results ?? []}
+      results={(results ?? []) as ResultRow[]}
     />
   );
 }

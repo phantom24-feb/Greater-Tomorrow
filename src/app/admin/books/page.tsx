@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { compressAndUploadImage } from "@/lib/storage/uploadImage";
 
@@ -195,10 +196,12 @@ export default function AdminBooksPage() {
           </label>
           <div className="flex items-center gap-4">
             {coverPreview && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={coverPreview}
                 alt="Cover preview"
+                width={48}
+                height={64}
+                unoptimized
                 className="h-16 w-12 rounded object-cover"
               />
             )}
@@ -269,10 +272,11 @@ export default function AdminBooksPage() {
               >
                 <td className="px-4 py-2.5">
                   {b.cover_image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       src={b.cover_image_url}
                       alt={b.title}
+                      width={36}
+                      height={48}
                       className="h-12 w-9 rounded object-cover"
                     />
                   ) : (

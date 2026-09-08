@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { compressAndUploadImage } from "@/lib/storage/uploadImage";
 
@@ -89,10 +90,11 @@ export default function StudentRosterTable({
                     <td className="px-4 py-2.5">
                       <label className="group relative block h-10 w-10 cursor-pointer">
                         {s.photo_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
+                          <Image
                             src={s.photo_url}
                             alt={`${s.first_name} ${s.last_name}`}
+                            width={40}
+                            height={40}
                             className="h-10 w-10 rounded-full object-cover"
                           />
                         ) : (
