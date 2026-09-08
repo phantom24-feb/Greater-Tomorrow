@@ -57,7 +57,13 @@ export default function AdminFeesPage() {
   }
 
   useEffect(() => {
-    loadData();
+    const timer = window.setTimeout(() => {
+      void loadData();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+    // loadData is intentionally run once when the page mounts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function updateItem(index: number, field: keyof FeeItemInput, value: string) {

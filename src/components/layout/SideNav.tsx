@@ -15,7 +15,6 @@ const studentItems: NavItem[] = [
   { label: "Account", href: "/account", icon: "account" },
   { label: "Check Results", href: "/results", icon: "results" },
   { label: "View Tuition", href: "/tuition", icon: "tuition" },
-  { label: "Online Registration", href: "/register", icon: "register" },
   { label: "View Books", href: "/books", icon: "books" },
   { label: "Settings", href: "/settings", icon: "settings" },
 ];

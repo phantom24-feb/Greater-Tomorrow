@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import PublicHeader from "@/components/layout/PublicHeader";
 
 type IconName = "results" | "tuition" | "register" | "books";
 
@@ -109,6 +110,7 @@ export default async function HomeContent() {
   const {
     data: { session },
   } = await supabase.auth.getSession();
+  const user = session?.user;
   const { data: latestAnnouncement } = await supabase
     .from("announcements")
     .select("id, title, created_at")
@@ -118,53 +120,7 @@ export default async function HomeContent() {
 
   return (
     <div className="bg-white text-ink">
-      {!session?.user && (
-        <header className="sticky top-0 z-20 bg-navy">
-          <div className="mx-auto flex max-w-[1160px] items-center justify-between px-6 py-4">
-            <div className="flex items-center gap-3">
-              {/* Replace with an <img> of the real school crest/logo */}
-              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/35 font-display text-[15px] font-semibold text-white">
-                GS
-              </div>
-              <span className="font-display text-lg font-semibold tracking-wide text-white">
-                Greater Tomorrow Secondary School
-              </span>
-            </div>
-            <nav className="hidden items-center gap-7 sm:flex">
-              <Link
-                href="/announcements"
-                className="text-[14.5px] font-medium text-white/80 transition-colors hover:text-white"
-              >
-                Announcements
-              </Link>
-              <Link
-                href="/tuition"
-                className="text-[14.5px] font-medium text-white/80 transition-colors hover:text-white"
-              >
-                Tuition
-              </Link>
-              <Link
-                href="/books"
-                className="text-[14.5px] font-medium text-white/80 transition-colors hover:text-white"
-              >
-                Books
-              </Link>
-              <Link
-                href="/register"
-                className="text-[14.5px] font-medium text-white/80 transition-colors hover:text-white"
-              >
-                Register
-              </Link>
-              <Link
-                href="/login"
-                className="rounded border border-white/40 px-4 py-[7px] text-[14.5px] font-medium text-white/80 transition-colors hover:bg-white hover:text-navy"
-              >
-                Login
-              </Link>
-            </nav>
-          </div>
-        </header>
-      )}
+      <PublicHeader />
 
       {/* Hero */}
       <section className="bg-navy px-6 pb-24 pt-20">
@@ -179,14 +135,16 @@ export default async function HomeContent() {
             Check results, review tuition, and apply for admission — all in one
             place.
           </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <Link
-              href="/register"
-              className="inline-flex items-center justify-center rounded bg-oxblood px-6 py-3 text-[15px] font-semibold text-white transition-all hover:-translate-y-px hover:bg-oxblood-dark hover:shadow-[0_6px_16px_rgba(92,26,36,0.35)] active:translate-y-0 active:scale-[0.97]"
-            >
-              Apply for admission
-            </Link>
-          </div>
+          {!user && (
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link
+                href="/register"
+                className="inline-flex items-center justify-center rounded bg-oxblood px-6 py-3 text-[15px] font-semibold text-white transition-all hover:-translate-y-px hover:bg-oxblood-dark hover:shadow-[0_6px_16px_rgba(92,26,36,0.35)] active:translate-y-0 active:scale-[0.97]"
+              >
+                Apply for admission
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
@@ -228,23 +186,25 @@ export default async function HomeContent() {
             Quick access
           </h2>
           <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 lg:grid-cols-4">
-            {quickLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="flex flex-col gap-2.5 rounded-md bg-navy p-7 transition-all hover:-translate-y-[3px] hover:bg-oxblood hover:shadow-[0_10px_24px_rgba(20,33,61,0.25)] active:translate-y-[-1px] active:scale-[0.98]"
-              >
-                <span className="h-[30px] w-[30px] text-white">
-                  <Icon name={link.icon} />
-                </span>
-                <span className="font-display text-[16.5px] font-semibold text-white">
-                  {link.label}
-                </span>
-                <span className="text-[13px] leading-snug text-white/70">
-                  {link.description}
-                </span>
-              </Link>
-            ))}
+            {quickLinks
+              .filter((link) => !user || link.href !== "/register")
+              .map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="flex flex-col gap-2.5 rounded-md bg-navy p-7 transition-all hover:-translate-y-[3px] hover:bg-oxblood hover:shadow-[0_10px_24px_rgba(20,33,61,0.25)] active:translate-y-[-1px] active:scale-[0.98]"
+                >
+                  <span className="h-[30px] w-[30px] text-white">
+                    <Icon name={link.icon} />
+                  </span>
+                  <span className="font-display text-[16.5px] font-semibold text-white">
+                    {link.label}
+                  </span>
+                  <span className="text-[13px] leading-snug text-white/70">
+                    {link.description}
+                  </span>
+                </Link>
+              ))}
           </div>
         </div>
       </section>
@@ -273,12 +233,14 @@ export default async function HomeContent() {
             >
               Books
             </Link>
-            <Link
-              href="/register"
-              className="text-[13.5px] text-white/70 hover:text-white"
-            >
-              Registration
-            </Link>
+            {!user && (
+              <Link
+                href="/register"
+                className="text-[13.5px] text-white/70 hover:text-white"
+              >
+                Registration
+              </Link>
+            )}
             <Link
               href="/login"
               className="text-[13.5px] text-white/70 hover:text-white"

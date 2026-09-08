@@ -49,7 +49,7 @@ export default async function ClassStudentsPage({
       </h1>
       <p className="mb-7 text-[14.5px] text-muted">
         {rosterStudents.length} student{rosterStudents.length === 1 ? "" : "s"}{" "}
-        in this class. Click a photo to upload or change it; click "Details" for
+        in this class. Click a photo to upload or change it; click &quot;Details&quot; for
         guardian info.
       </p>
 

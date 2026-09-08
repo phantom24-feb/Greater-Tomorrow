@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import {
   parseStudentCsv,
@@ -158,12 +159,12 @@ export default function AdminStudentImportPage() {
 
   return (
     <div className="mx-auto max-w-[1000px] px-6 py-10">
-      <a
+      <Link
         href="/admin/students"
         className="mb-4 inline-block text-[13.5px] font-medium text-oxblood hover:underline"
       >
         ← All students
-      </a>
+      </Link>
       <h1 className="mb-1 font-display text-2xl font-semibold text-navy">
         Import Students
       </h1>
