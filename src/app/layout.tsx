@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import AppShell from "@/components/layout/AppShell";
 
 export const metadata: Metadata = {
-  title: "Greenfield Secondary School",
+  title: "Greater Tomorrow Secondary School",
   description: "Check results, view tuition, apply for admission, and more.",
 };
 
@@ -15,8 +15,9 @@ export default async function RootLayout({
 }) {
   const supabase = await createClient();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user;
 
   let role: "admin" | "student" | null = null;
 

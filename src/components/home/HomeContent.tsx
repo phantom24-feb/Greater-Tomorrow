@@ -107,8 +107,8 @@ function Icon({ name }: IconProps) {
 export default async function HomeContent() {
   const supabase = await createClient();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
   const { data: latestAnnouncement } = await supabase
     .from("announcements")
     .select("id, title, created_at")
@@ -118,7 +118,7 @@ export default async function HomeContent() {
 
   return (
     <div className="bg-white text-ink">
-      {!user && (
+      {!session?.user && (
         <header className="sticky top-0 z-20 bg-navy">
           <div className="mx-auto flex max-w-[1160px] items-center justify-between px-6 py-4">
             <div className="flex items-center gap-3">
@@ -127,7 +127,7 @@ export default async function HomeContent() {
                 GS
               </div>
               <span className="font-display text-lg font-semibold tracking-wide text-white">
-                Greenfield Secondary School
+                Greater Tomorrow Secondary School
               </span>
             </div>
             <nav className="hidden items-center gap-7 sm:flex">
@@ -254,7 +254,7 @@ export default async function HomeContent() {
         <div className="mx-auto flex max-w-[1160px] flex-wrap items-start justify-between gap-6">
           <div>
             <div className="mb-1.5 font-display text-base text-white">
-              Greenfield Secondary School
+              Greater Tomorrow Secondary School
             </div>
             <p className="text-[13.5px]">
               12 Aggrey Road, Port Harcourt, Rivers State

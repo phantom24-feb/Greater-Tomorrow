@@ -1,10 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-// Only these paths require login. Homepage, tuition, books, registration,
-// create-account, and login itself all stay public.
-const PROTECTED_PATHS = ["/results", "/account", "/settings", "/admin"];
-
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -29,15 +25,13 @@ export async function middleware(request: NextRequest) {
     },
   );
 
+  // Middleware only avoids needless redirects; protected layouts still verify
+  // the user with getUser() before returning private data.
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  const isProtected = PROTECTED_PATHS.some((path) =>
-    request.nextUrl.pathname.startsWith(path),
-  );
-
-  if (isProtected && !user) {
+  if (!session?.user) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirectTo", request.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);

@@ -4,11 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 export default async function AdminStudentsPage() {
   const supabase = await createClient();
 
-  const { data: classes } = await supabase
-    .from("classes")
-    .select("id, name, level")
-    .order("level");
-  const { data: students } = await supabase.from("students").select("class_id");
+  const [{ data: classes }, { data: students }] = await Promise.all([
+    supabase.from("classes").select("id, name, level").order("level"),
+    supabase.from("students").select("class_id"),
+  ]);
 
   const counts = new Map<string, number>();
   (students ?? []).forEach((s) => {

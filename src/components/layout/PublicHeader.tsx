@@ -26,7 +26,7 @@ export default function PublicHeader() {
             GS
           </div>
           <span className="font-display text-lg font-semibold tracking-wide text-white">
-            Greenfield Secondary School
+            Greater Tomorrow Secondary School
           </span>
         </Link>
         <nav className="hidden items-center gap-7 sm:flex">
