@@ -2,14 +2,17 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
-  const { admissionNo, dateOfBirth, loginMethod, loginValue, password } =
-    await request.json();
+  try {
+    const { admissionNo, dateOfBirth, loginMethod, loginValue, password } =
+      await request.json();
+    const normalizedAdmissionNo = admissionNo?.trim();
+    const normalizedLoginValue = loginValue?.trim();
 
   if (
-    !admissionNo ||
+    !normalizedAdmissionNo ||
     !dateOfBirth ||
     !loginMethod ||
-    !loginValue ||
+    !normalizedLoginValue ||
     !password
   ) {
     return NextResponse.json(
@@ -25,6 +28,16 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json(
+      {
+        error:
+          "Account creation is not configured. Add SUPABASE_SERVICE_ROLE_KEY to the server environment.",
+      },
+      { status: 503 },
+    );
+  }
+
   const supabase = createAdminClient();
 
   // 1. Find a matching student record (service role bypasses RLS here,
@@ -32,7 +45,7 @@ export async function POST(request: Request) {
   const { data: student, error: lookupError } = await supabase
     .from("students")
     .select("id, user_id, admission_no, date_of_birth, status")
-    .eq("admission_no", admissionNo)
+    .ilike("admission_no", normalizedAdmissionNo)
     .single();
 
   if (lookupError || !student) {
@@ -70,12 +83,12 @@ export async function POST(request: Request) {
   const { data: newUser, error: createError } =
     loginMethod === "email"
       ? await supabase.auth.admin.createUser({
-          email: loginValue,
+          email: normalizedLoginValue,
           password,
           email_confirm: true,
         })
       : await supabase.auth.admin.createUser({
-          phone: loginValue,
+          phone: normalizedLoginValue,
           password,
           phone_confirm: true,
         });
@@ -94,8 +107,8 @@ export async function POST(request: Request) {
     .update({
       user_id: newUser.user.id,
       ...(loginMethod === "email"
-        ? { email: loginValue }
-        : { phone: loginValue }),
+        ? { email: normalizedLoginValue }
+        : { phone: normalizedLoginValue }),
     })
     .eq("id", student.id);
 
@@ -108,5 +121,12 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Create account error:", error);
+    return NextResponse.json(
+      { error: "Could not create account. Please try again." },
+      { status: 500 },
+    );
+  }
 }

@@ -17,13 +17,10 @@ export default function SplashScreen({ children }: SplashScreenProps) {
     const navigation = performance.getEntriesByType(
       "navigation",
     )[0] as PerformanceNavigationTiming | undefined;
-    const hasShown = sessionStorage.getItem("greater-tomorrow-splash") === "1";
-
-    if (navigation?.type === "back_forward" || hasShown) {
+    if (navigation?.type === "back_forward") {
       return;
     }
 
-    sessionStorage.setItem("greater-tomorrow-splash", "1");
     const showTimer = setTimeout(() => setShow(true), 0);
 
     const fadeTimer = setTimeout(
@@ -52,7 +49,7 @@ export default function SplashScreen({ children }: SplashScreenProps) {
             GS
           </div>
           <span className="max-w-[min(100%,28rem)] font-display text-[clamp(1.25rem,5vw,1.5rem)] font-semibold leading-tight text-white">
-            Greater Tomorrow Secondary School
+            Greater Tomorrow School
           </span>
           <span className="text-sm italic text-white/70">
             Knowledge, Character, Excellence

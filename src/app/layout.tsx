@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/getCurrentUser";
 import AppShell from "@/components/layout/AppShell";
 
 export const metadata: Metadata = {
-  title: "Greater Tomorrow Secondary School",
+  title: "Greater Tomorrow School",
   description: "Check results, view tuition, apply for admission, and more.",
 };
 
@@ -13,15 +14,12 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const user = session?.user;
+  const user = await getCurrentUser();
 
   let role: "admin" | "student" | null = null;
 
   if (user) {
+    const supabase = await createClient();
     const { data: admin } = await supabase
       .from("admins")
       .select("id")

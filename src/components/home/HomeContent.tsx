@@ -1,6 +1,7 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { getLatestAnnouncement } from "@/lib/data/public";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/getCurrentUser";
 import PublicHeader from "@/components/layout/PublicHeader";
 
 type IconName = "results" | "tuition" | "register" | "books";
@@ -106,17 +107,53 @@ function Icon({ name }: IconProps) {
   }
 }
 
-export default async function HomeContent() {
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const user = session?.user;
+async function AnnouncementNotice() {
   const latestAnnouncement = await getLatestAnnouncement();
 
   return (
+    <>
+      {latestAnnouncement ? (
+        <div className="border-y border-bordersoft border-l-[3px] border-l-oxblood px-[18px] py-[18px]">
+          <p className="text-[15.5px] font-medium text-ink">
+            {latestAnnouncement.title}
+          </p>
+          <p className="mt-1 text-[13.5px] text-muted">
+            {new Date(latestAnnouncement.created_at).toLocaleDateString()}
+          </p>
+        </div>
+      ) : (
+        <p className="border-y border-bordersoft px-[18px] py-[18px] text-[14.5px] text-muted">
+          No announcements yet.
+        </p>
+      )}
+
+      <Link
+        href="/announcements"
+        className="mt-6 inline-flex items-center justify-center rounded border border-navy/20 px-6 py-3 text-[15px] font-semibold text-navy transition-all hover:border-navy hover:bg-bgsoft active:scale-[0.97]"
+      >
+        See all announcements
+      </Link>
+    </>
+  );
+}
+
+function AnnouncementFallback() {
+  return (
+    <>
+      <div className="h-[67px] animate-pulse border-y border-bordersoft border-l-[3px] border-l-bordersoft bg-bgsoft/40" />
+      <div className="mt-6 h-[48px] w-[202px] animate-pulse rounded border border-bordersoft bg-bgsoft/40" />
+    </>
+  );
+}
+
+export default async function HomeContent() {
+  // Same cached call layout.tsx already made for this request — this does
+  // NOT trigger a second network hit, React's cache() dedupes it.
+  const user = await getCurrentUser();
+
+  return (
     <div className="bg-white text-ink">
-      <PublicHeader />
+      <PublicHeader isLoggedIn={!!user} />
 
       {/* Hero */}
       <section className="bg-navy px-6 pb-24 pt-20">
@@ -150,28 +187,9 @@ export default async function HomeContent() {
           <h2 className="mb-7 font-display text-2xl font-semibold text-navy">
             Notice board
           </h2>
-
-          {latestAnnouncement ? (
-            <div className="border-y border-bordersoft border-l-[3px] border-l-oxblood px-[18px] py-[18px]">
-              <p className="text-[15.5px] font-medium text-ink">
-                {latestAnnouncement.title}
-              </p>
-              <p className="mt-1 text-[13.5px] text-muted">
-                {new Date(latestAnnouncement.created_at).toLocaleDateString()}
-              </p>
-            </div>
-          ) : (
-            <p className="border-y border-bordersoft px-[18px] py-[18px] text-[14.5px] text-muted">
-              No announcements yet.
-            </p>
-          )}
-
-          <Link
-            href="/announcements"
-            className="mt-6 inline-flex items-center justify-center rounded border border-navy/20 px-6 py-3 text-[15px] font-semibold text-navy transition-all hover:border-navy hover:bg-bgsoft active:scale-[0.97]"
-          >
-            See all announcements
-          </Link>
+          <Suspense fallback={<AnnouncementFallback />}>
+            <AnnouncementNotice />
+          </Suspense>
         </div>
       </section>
 
@@ -210,7 +228,7 @@ export default async function HomeContent() {
         <div className="mx-auto flex max-w-[1160px] flex-wrap items-start justify-between gap-6">
           <div>
             <div className="mb-1.5 font-display text-base text-white">
-              Greater Tomorrow Secondary School
+              Greater Tomorrow School
             </div>
             <p className="text-[13.5px]">
               12 Aggrey Road, Port Harcourt, Rivers State

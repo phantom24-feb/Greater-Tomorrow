@@ -41,6 +41,7 @@ export default function AdminFeesPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const supabase = createClient();
 
@@ -124,7 +125,32 @@ export default function AdminFeesPage() {
     }
 
     setItems([{ label: "Tuition", amount: "" }]);
+    setEditingId(null);
     loadData();
+  }
+
+  function startEditing(fee: Fee) {
+    setEditingId(fee.id);
+    setClassId(fee.class_id);
+    setTerm(fee.term);
+    setSession(fee.session);
+    setItems(
+      fee.breakdown?.map((item) => ({
+        label: item.label,
+        amount: String(item.amount),
+      })) ?? [{ label: "Tuition", amount: String(fee.amount) }],
+    );
+    setError(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function cancelEditing() {
+    setEditingId(null);
+    setClassId("");
+    setTerm(TERMS[0]);
+    setSession("2025/2026");
+    setItems([{ label: "Tuition", amount: "" }]);
+    setError(null);
   }
 
   return (
@@ -239,8 +265,17 @@ export default function AdminFeesPage() {
           disabled={loading}
           className="inline-flex items-center justify-center self-start rounded bg-oxblood px-5 py-2.5 text-[14.5px] font-semibold text-white transition-all hover:bg-oxblood-dark active:scale-[0.97] disabled:opacity-60"
         >
-          {loading ? "Saving…" : "Save fee"}
+          {loading ? "Saving…" : editingId ? "Update fee" : "Save fee"}
         </button>
+        {editingId && (
+          <button
+            type="button"
+            onClick={cancelEditing}
+            className="text-left text-[13.5px] font-medium text-oxblood hover:underline"
+          >
+            Cancel editing
+          </button>
+        )}
       </form>
 
       <h2 className="mb-4 font-display text-lg font-semibold text-navy">
@@ -268,6 +303,12 @@ export default function AdminFeesPage() {
                   <td className="px-4 py-2.5">{f.session}</td>
                   <td className="px-4 py-2.5">₦{f.amount.toLocaleString()}</td>
                   <td className="px-4 py-2.5">
+                    <button
+                      onClick={() => startEditing(f)}
+                      className="mr-3 text-[13px] font-medium text-oxblood hover:underline"
+                    >
+                      Edit
+                    </button>
                     {f.breakdown && f.breakdown.length > 0 && (
                       <button
                         onClick={() =>

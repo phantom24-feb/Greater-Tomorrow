@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import SideNav from "./SideNav";
 
@@ -19,6 +19,18 @@ const NO_SHELL_PATHS = ["/login", "/create-account"];
 export default function AppShell({ role, children }: AppShellProps) {
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  useEffect(() => {
+    const applyTheme = () => {
+      const theme = window.localStorage.getItem("school-theme");
+      document.documentElement.classList.toggle("dark", theme === "dark");
+    };
+
+    applyTheme();
+    window.addEventListener("school-theme-change", applyTheme);
+    return () => window.removeEventListener("school-theme-change", applyTheme);
+  }, []);
+
   const skipShell = !role || NO_SHELL_PATHS.includes(pathname);
 
   if (skipShell) {

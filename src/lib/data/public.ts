@@ -3,20 +3,34 @@ import { createClient } from "@supabase/supabase-js";
 
 export const getLatestAnnouncement = unstable_cache(
   async () => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    );
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
 
-    const { data } = await supabase
-      .from("announcements")
-      .select("id, title, created_at")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+  const { data } = await supabase
+    .from("announcements")
+    .select("id, title, created_at")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-    return data;
+  return data;
   },
   ["latest-announcement"],
-  { revalidate: 3600 },
+  { revalidate: 60 },
 );
+
+export async function getAnnouncements() {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
+
+  const { data } = await supabase
+    .from("announcements")
+    .select("id, title, body, created_at")
+    .order("created_at", { ascending: false });
+
+  return data ?? [];
+}

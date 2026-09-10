@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import PublicHeader from "@/components/layout/PublicHeader";
 import { createClient } from "@/lib/supabase/client";
 import { compressAndUploadImage } from "@/lib/storage/uploadImage";
@@ -20,10 +19,17 @@ interface StudentInfo {
   otherName: string;
   dateOfBirth: string;
   gender: string;
+  nationality: string;
+  stateOfOrigin: string;
+  lga: string;
   religion: string;
+  bloodGroup: string;
+  genotype: string;
   address: string;
   previousSchool: string;
   classApplyingFor: string;
+  sessionApplyingFor: string;
+  medicalNotes: string;
 }
 
 interface GuardianInfo {
@@ -42,10 +48,17 @@ const emptyStudent: StudentInfo = {
   otherName: "",
   dateOfBirth: "",
   gender: "",
+  nationality: "Nigerian",
+  stateOfOrigin: "",
+  lga: "",
   religion: "",
+  bloodGroup: "",
+  genotype: "",
   address: "",
   previousSchool: "",
   classApplyingFor: "",
+  sessionApplyingFor: "2026/2027",
+  medicalNotes: "",
 };
 
 const emptyGuardian: GuardianInfo = {
@@ -58,6 +71,9 @@ const emptyGuardian: GuardianInfo = {
   address: "",
 };
 
+const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const GENOTYPES = ["AA", "AS", "SS", "AC"];
+
 export default function RegisterPage() {
   const [step, setStep] = useState<Step>("student");
   const [classes, setClasses] = useState<ClassOption[]>([]);
@@ -67,6 +83,7 @@ export default function RegisterPage() {
   const [guardians, setGuardians] = useState<GuardianInfo[]>([
     { ...emptyGuardian },
   ]);
+  const [declarationAccepted, setDeclarationAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -118,16 +135,35 @@ export default function RegisterPage() {
     e.preventDefault();
     setError(null);
 
-    if (
-      !student.firstName.trim() ||
-      !student.lastName.trim() ||
-      !student.dateOfBirth ||
-      !student.gender ||
-      !student.classApplyingFor
-    ) {
-      setError(
-        "Please fill in all required fields (name, date of birth, gender, class).",
-      );
+    const required: [string, string][] = [
+      [student.firstName, "First name"],
+      [student.lastName, "Last name"],
+      [student.dateOfBirth, "Date of birth"],
+      [student.gender, "Gender"],
+      [student.nationality, "Nationality"],
+      [student.stateOfOrigin, "State of origin"],
+      [student.lga, "Local government area"],
+      [student.religion, "Religion"],
+      [student.bloodGroup, "Blood group"],
+      [student.genotype, "Genotype"],
+      [student.address, "Home address"],
+      [
+        student.previousSchool,
+        'Previous school (write "None" if not applicable)',
+      ],
+      [student.classApplyingFor, "Class applying for"],
+      [student.sessionApplyingFor, "Session applying for"],
+      [student.medicalNotes, 'Medical notes (write "None" if not applicable)'],
+    ];
+
+    const missing = required.find(([value]) => !value.trim());
+    if (missing) {
+      setError(`${missing[1]} is required.`);
+      return;
+    }
+
+    if (!photoFile) {
+      setError("A student photo is required.");
       return;
     }
 
@@ -138,14 +174,20 @@ export default function RegisterPage() {
     e.preventDefault();
     setError(null);
 
-    const validGuardians = guardians.filter(
-      (g) => g.fullName.trim() && g.phone.trim(),
-    );
-    if (validGuardians.length === 0) {
-      setError(
-        "Add at least one parent/guardian with a name and phone number.",
-      );
-      return;
+    for (const [index, g] of guardians.entries()) {
+      const required: [string, string][] = [
+        [g.fullName, "Full name"],
+        [g.phone, "Phone number"],
+        [g.email, "Email"],
+        [g.occupation, "Occupation"],
+        [g.religion, "Religion"],
+        [g.address, "Address"],
+      ];
+      const missing = required.find(([value]) => !value.trim());
+      if (missing) {
+        setError(`Guardian ${index + 1}: ${missing[1]} is required.`);
+        return;
+      }
     }
 
     setStep("review");
@@ -153,6 +195,12 @@ export default function RegisterPage() {
 
   async function handleSubmit() {
     setError(null);
+
+    if (!declarationAccepted) {
+      setError("Please confirm the declaration before submitting.");
+      return;
+    }
+
     setSubmitting(true);
 
     const supabase = createClient();
@@ -172,17 +220,15 @@ export default function RegisterPage() {
       }
     }
 
-    const validGuardians = guardians
-      .filter((g) => g.fullName.trim() && g.phone.trim())
-      .map((g) => ({
-        relationship: g.relationship || null,
-        full_name: g.fullName.trim(),
-        phone: g.phone.trim(),
-        email: g.email.trim() || null,
-        occupation: g.occupation.trim() || null,
-        religion: g.religion.trim() || null,
-        address: g.address.trim() || null,
-      }));
+    const guardianPayload = guardians.map((g) => ({
+      relationship: g.relationship,
+      full_name: g.fullName.trim(),
+      phone: g.phone.trim(),
+      email: g.email.trim(),
+      occupation: g.occupation.trim(),
+      religion: g.religion.trim(),
+      address: g.address.trim(),
+    }));
 
     const { error: insertError } = await supabase.from("registrations").insert({
       first_name: student.firstName.trim(),
@@ -190,12 +236,12 @@ export default function RegisterPage() {
       other_name: student.otherName.trim() || null,
       date_of_birth: student.dateOfBirth,
       gender: student.gender,
-      religion: student.religion.trim() || null,
-      address: student.address.trim() || null,
-      previous_school: student.previousSchool.trim() || null,
+      religion: student.religion.trim(),
+      address: student.address.trim(),
+      previous_school: student.previousSchool.trim(),
       class_applying_for: student.classApplyingFor,
       photo_url: photoUrl,
-      guardians: validGuardians,
+      guardians: guardianPayload,
       status: "pending",
     });
 
@@ -221,11 +267,10 @@ export default function RegisterPage() {
           Online Registration
         </h1>
         <p className="mb-8 text-[15px] text-muted">
-          Apply for admission. Applications are reviewed by the school office
-          before an admission number is assigned.
+          Apply for admission. All fields are required. Applications are
+          reviewed by the school office before an admission number is assigned.
         </p>
 
-        {/* Step indicator */}
         {step !== "done" && (
           <div className="mb-8 flex items-center gap-2 text-[12.5px] font-medium text-muted">
             <span className={step === "student" ? "text-oxblood" : ""}>
@@ -237,7 +282,7 @@ export default function RegisterPage() {
             </span>
             <span>—</span>
             <span className={step === "review" ? "text-oxblood" : ""}>
-              3. Review
+              3. Review & Declaration
             </span>
           </div>
         )}
@@ -315,29 +360,47 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div>
-              <label className="mb-1.5 block text-[13.5px] font-medium text-ink">
-                Class Applying For *
-              </label>
-              <select
-                value={student.classApplyingFor}
-                onChange={(e) =>
-                  updateStudent("classApplyingFor", e.target.value)
-                }
-                className="w-full rounded border border-bordersoft px-3.5 py-2.5 text-[15px] outline-none focus:border-navy"
-              >
-                <option value="">Select class</option>
-                {classes.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <label className="mb-1.5 block text-[13.5px] font-medium text-ink">
+                  Nationality *
+                </label>
+                <input
+                  type="text"
+                  value={student.nationality}
+                  onChange={(e) => updateStudent("nationality", e.target.value)}
+                  className="w-full rounded border border-bordersoft px-3.5 py-2.5 text-[15px] outline-none focus:border-navy"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[13.5px] font-medium text-ink">
+                  State of Origin *
+                </label>
+                <input
+                  type="text"
+                  value={student.stateOfOrigin}
+                  onChange={(e) =>
+                    updateStudent("stateOfOrigin", e.target.value)
+                  }
+                  className="w-full rounded border border-bordersoft px-3.5 py-2.5 text-[15px] outline-none focus:border-navy"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[13.5px] font-medium text-ink">
+                  L.G.A. *
+                </label>
+                <input
+                  type="text"
+                  value={student.lga}
+                  onChange={(e) => updateStudent("lga", e.target.value)}
+                  className="w-full rounded border border-bordersoft px-3.5 py-2.5 text-[15px] outline-none focus:border-navy"
+                />
+              </div>
             </div>
 
             <div>
               <label className="mb-1.5 block text-[13.5px] font-medium text-ink">
-                Religion
+                Religion *
               </label>
               <input
                 type="text"
@@ -347,9 +410,46 @@ export default function RegisterPage() {
               />
             </div>
 
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-[13.5px] font-medium text-ink">
+                  Blood Group *
+                </label>
+                <select
+                  value={student.bloodGroup}
+                  onChange={(e) => updateStudent("bloodGroup", e.target.value)}
+                  className="w-full rounded border border-bordersoft px-3.5 py-2.5 text-[15px] outline-none focus:border-navy"
+                >
+                  <option value="">Select</option>
+                  {BLOOD_GROUPS.map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[13.5px] font-medium text-ink">
+                  Genotype *
+                </label>
+                <select
+                  value={student.genotype}
+                  onChange={(e) => updateStudent("genotype", e.target.value)}
+                  className="w-full rounded border border-bordersoft px-3.5 py-2.5 text-[15px] outline-none focus:border-navy"
+                >
+                  <option value="">Select</option>
+                  {GENOTYPES.map((g) => (
+                    <option key={g} value={g}>
+                      {g}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             <div>
               <label className="mb-1.5 block text-[13.5px] font-medium text-ink">
-                Home Address
+                Home Address *
               </label>
               <textarea
                 rows={2}
@@ -361,7 +461,7 @@ export default function RegisterPage() {
 
             <div>
               <label className="mb-1.5 block text-[13.5px] font-medium text-ink">
-                Previous School
+                Previous School *
               </label>
               <input
                 type="text"
@@ -369,22 +469,69 @@ export default function RegisterPage() {
                 onChange={(e) =>
                   updateStudent("previousSchool", e.target.value)
                 }
+                placeholder='Write "None" if this is the first school'
                 className="w-full rounded border border-bordersoft px-3.5 py-2.5 text-[15px] outline-none focus:border-navy"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-[13.5px] font-medium text-ink">
+                  Class Applying For *
+                </label>
+                <select
+                  value={student.classApplyingFor}
+                  onChange={(e) =>
+                    updateStudent("classApplyingFor", e.target.value)
+                  }
+                  className="w-full rounded border border-bordersoft px-3.5 py-2.5 text-[15px] outline-none focus:border-navy"
+                >
+                  <option value="">Select class</option>
+                  {classes.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-[13.5px] font-medium text-ink">
+                  Session Applying For *
+                </label>
+                <input
+                  type="text"
+                  value={student.sessionApplyingFor}
+                  onChange={(e) =>
+                    updateStudent("sessionApplyingFor", e.target.value)
+                  }
+                  className="w-full rounded border border-bordersoft px-3.5 py-2.5 text-[15px] outline-none focus:border-navy"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-[13.5px] font-medium text-ink">
+                Known Allergies / Medical Conditions *
+              </label>
+              <textarea
+                rows={2}
+                value={student.medicalNotes}
+                onChange={(e) => updateStudent("medicalNotes", e.target.value)}
+                placeholder='Write "None" if not applicable'
+                className="w-full resize-none rounded border border-bordersoft px-3.5 py-2.5 text-[15px] outline-none focus:border-navy"
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-[13.5px] font-medium text-ink">
-                Student Photo
+                Student Photo *
               </label>
               <div className="flex items-center gap-4">
                 {photoPreview && (
-                  <Image
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
                     src={photoPreview}
                     alt="Preview"
-                    width={64}
-                    height={64}
-                    unoptimized
                     className="h-16 w-16 rounded-full object-cover"
                   />
                 )}
@@ -399,7 +546,7 @@ export default function RegisterPage() {
                 </label>
               </div>
               <p className="mt-1.5 text-[12px] text-muted">
-                Optional, but helps the office identify the applicant.
+                A clear, recent passport-style photo.
               </p>
             </div>
 
@@ -441,7 +588,7 @@ export default function RegisterPage() {
                 <div className="flex flex-col gap-4">
                   <div>
                     <label className="mb-1.5 block text-[13.5px] font-medium text-ink">
-                      Relationship
+                      Relationship *
                     </label>
                     <select
                       value={g.relationship}
@@ -488,7 +635,7 @@ export default function RegisterPage() {
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <label className="mb-1.5 block text-[13.5px] font-medium text-ink">
-                        Email
+                        Email *
                       </label>
                       <input
                         type="email"
@@ -501,7 +648,7 @@ export default function RegisterPage() {
                     </div>
                     <div>
                       <label className="mb-1.5 block text-[13.5px] font-medium text-ink">
-                        Occupation
+                        Occupation *
                       </label>
                       <input
                         type="text"
@@ -517,7 +664,7 @@ export default function RegisterPage() {
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <label className="mb-1.5 block text-[13.5px] font-medium text-ink">
-                        Religion
+                        Religion *
                       </label>
                       <input
                         type="text"
@@ -530,7 +677,7 @@ export default function RegisterPage() {
                     </div>
                     <div>
                       <label className="mb-1.5 block text-[13.5px] font-medium text-ink">
-                        Address
+                        Address *
                       </label>
                       <input
                         type="text"
@@ -572,7 +719,7 @@ export default function RegisterPage() {
           </form>
         )}
 
-        {/* STEP 3: Review */}
+        {/* STEP 3: Review & Declaration */}
         {step === "review" && (
           <div className="flex flex-col gap-6">
             <div className="rounded-md border border-bordersoft bg-white p-5">
@@ -583,27 +730,49 @@ export default function RegisterPage() {
                 {student.firstName} {student.otherName} {student.lastName}
               </p>
               <p className="text-[13.5px] text-muted">
-                {className} · DOB {student.dateOfBirth} · {student.gender}
+                {className} · {student.sessionApplyingFor} · DOB{" "}
+                {student.dateOfBirth} · {student.gender}
               </p>
-              {student.previousSchool && (
-                <p className="text-[13.5px] text-muted">
-                  Previous school: {student.previousSchool}
-                </p>
-              )}
+              <p className="text-[13.5px] text-muted">
+                {student.nationality} · {student.stateOfOrigin} ({student.lga})
+                · {student.religion}
+              </p>
+              <p className="text-[13.5px] text-muted">
+                Blood group {student.bloodGroup} · Genotype {student.genotype}
+              </p>
+              <p className="text-[13.5px] text-muted">
+                Previous school: {student.previousSchool}
+              </p>
+              <p className="text-[13.5px] text-muted">
+                Medical notes: {student.medicalNotes}
+              </p>
             </div>
 
             <div className="rounded-md border border-bordersoft bg-white p-5">
               <p className="mb-3 font-display text-[15px] font-semibold text-navy">
                 Parent/Guardian(s)
               </p>
-              {guardians
-                .filter((g) => g.fullName.trim())
-                .map((g, i) => (
-                  <p key={i} className="text-[14px] text-ink">
-                    {g.relationship}: {g.fullName} — {g.phone}
-                  </p>
-                ))}
+              {guardians.map((g, i) => (
+                <p key={i} className="text-[14px] text-ink">
+                  {g.relationship}: {g.fullName} — {g.phone} — {g.email}
+                </p>
+              ))}
             </div>
+
+            <label className="flex items-start gap-2.5 rounded-md border border-bordersoft bg-bgsoft p-4 text-[13.5px] text-ink">
+              <input
+                type="checkbox"
+                checked={declarationAccepted}
+                onChange={(e) => setDeclarationAccepted(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                I/We declare that the information provided in this application
+                is true and correct to the best of my/our knowledge, and
+                understand that false information may result in the application
+                being rejected or admission withdrawn.
+              </span>
+            </label>
 
             <div className="flex gap-3">
               <button
@@ -615,8 +784,8 @@ export default function RegisterPage() {
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={submitting}
-                className="inline-flex items-center justify-center rounded bg-oxblood px-6 py-3 text-[15px] font-semibold text-white transition-all hover:bg-oxblood-dark active:scale-[0.97] disabled:opacity-60"
+                disabled={submitting || !declarationAccepted}
+                className="inline-flex items-center justify-center rounded bg-oxblood px-6 py-3 text-[15px] font-semibold text-white transition-all hover:bg-oxblood-dark active:scale-[0.97] disabled:opacity-50"
               >
                 {submitting ? "Submitting…" : "Submit application"}
               </button>

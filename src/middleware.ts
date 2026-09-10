@@ -28,10 +28,10 @@ export async function middleware(request: NextRequest) {
   // Middleware only avoids needless redirects; protected layouts still verify
   // the user with getUser() before returning private data.
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session?.user) {
+  if (!user) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirectTo", request.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);

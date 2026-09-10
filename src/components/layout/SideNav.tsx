@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { NavIcon, type NavIconName } from "@/components/icons/NavIcons";
 
@@ -20,6 +20,7 @@ const studentItems: NavItem[] = [
 ];
 
 const adminItems: NavItem[] = [
+  { label: "Home", href: "/", icon: "home" },
   { label: "Dashboard", href: "/admin", icon: "dashboard" },
   { label: "Students", href: "/admin/students", icon: "students" },
   { label: "Results", href: "/admin/results", icon: "results" },
@@ -43,14 +44,12 @@ interface SideNavProps {
 
 export default function SideNav({ role, mobileOpen, onClose }: SideNavProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const items = role === "admin" ? adminItems : studentItems;
 
   async function handleLogout() {
     const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
+    await supabase.auth.signOut({ scope: "local" });
+    window.location.assign("/login");
   }
 
   return (
@@ -71,7 +70,9 @@ export default function SideNav({ role, mobileOpen, onClose }: SideNavProps) {
       <nav className="flex flex-1 flex-col gap-1 px-3">
         {items.map((item) => {
           const active =
-            pathname === item.href || pathname.startsWith(`${item.href}/`);
+            item.href === "/admin"
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <Link
               key={item.href}
@@ -90,19 +91,18 @@ export default function SideNav({ role, mobileOpen, onClose }: SideNavProps) {
             </Link>
           );
         })}
+        {role === "admin" && (
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 rounded-md px-3 py-2.5 text-left text-[14.5px] font-medium text-white/75 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <span className="h-[18px] w-[18px] flex-shrink-0">
+              <NavIcon name="logout" />
+            </span>
+            Log out
+          </button>
+        )}
       </nav>
-
-      <div className="px-3 pb-6">
-        <button
-          onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-[14.5px] font-medium text-white/75 transition-colors hover:bg-white/10 hover:text-white"
-        >
-          <span className="h-[18px] w-[18px] flex-shrink-0">
-            <NavIcon name="logout" />
-          </span>
-          Log out
-        </button>
-      </div>
     </aside>
   );
 }

@@ -66,7 +66,14 @@ export default function CreateAccountPage() {
       }),
     });
 
-    const data = await res.json();
+    let data: { error?: string; success?: boolean } = {};
+    try {
+      data = await res.json();
+    } catch {
+      setLoading(false);
+      setError("The account service is temporarily unavailable. Please try again.");
+      return;
+    }
     setLoading(false);
 
     if (!res.ok) {
@@ -85,7 +92,7 @@ export default function CreateAccountPage() {
           Create your account
         </h1>
         <p className="mb-7 text-[14.5px] text-muted">
-          For students already enrolled at the school. New applicants should use{" "}
+          Already enrolled? Use the admission number and date of birth given by the school office. New applicants should use{" "}
           <Link href="/register" className="text-oxblood hover:underline">
             Online Registration
           </Link>{" "}
@@ -108,6 +115,7 @@ export default function CreateAccountPage() {
                 value={admissionNo}
                 onChange={(e) => setAdmissionNo(e.target.value)}
                 className="w-full rounded border border-bordersoft px-3.5 py-2.5 text-[15px] outline-none focus:border-navy"
+                autoComplete="off"
               />
             </div>
             <div>

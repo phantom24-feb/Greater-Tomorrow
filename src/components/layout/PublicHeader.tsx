@@ -11,19 +11,41 @@ const navLinks = [
   { href: "/register", label: "Register" },
 ];
 
-export default function PublicHeader() {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+interface PublicHeaderProps {
+  /**
+   * Pass this when the caller already knows login state server-side
+   * (e.g. HomeContent, via getCurrentUser()). When provided, this
+   * component renders correctly on the very first paint with no
+   * client-side check or flash of nothing.
+   *
+   * If omitted (older call sites not yet updated), falls back to a
+   * client-side getSession() check — fine for a UI-only toggle, but
+   * will show nothing until it resolves.
+   */
+  isLoggedIn?: boolean;
+}
+
+export default function PublicHeader({
+  isLoggedIn: isLoggedInProp,
+}: PublicHeaderProps) {
+  const [isLoggedInState, setIsLoggedInState] = useState<boolean | null>(
+    isLoggedInProp ?? null,
+  );
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getSession().then(({ data }) =>
-      setIsLoggedIn(!!data.session?.user),
-    );
-  }, []);
+    // Server already told us — skip the client-side check entirely.
+    if (isLoggedInProp !== undefined) return;
 
-  // Render nothing until we know, and nothing at all once logged in —
-  // navigation lives in the side nav instead once a session exists.
+    const supabase = createClient();
+    supabase.auth
+      .getSession()
+      .then(({ data }) => setIsLoggedInState(!!data.session?.user));
+  }, [isLoggedInProp]);
+
+  const isLoggedIn = isLoggedInProp ?? isLoggedInState;
+
+  // Render nothing once logged in — navigation lives in the side nav instead.
   if (isLoggedIn !== false) {
     return null;
   }
@@ -40,7 +62,7 @@ export default function PublicHeader() {
             GS
           </div>
           <span className="font-display text-lg font-semibold tracking-wide text-white">
-            Greater Tomorrow Secondary School
+            Greater Tomorrow School
           </span>
         </Link>
 

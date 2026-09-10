@@ -5,6 +5,7 @@ export type NavIconName =
   | "books"
   | "account"
   | "settings"
+  | "home"
   | "dashboard"
   | "students"
   | "announcements"
@@ -111,6 +112,19 @@ export function NavIcon({ name }: NavIconProps) {
           <rect x="13" y="3.5" width="7.5" height="7.5" rx="1.2" />
           <rect x="3.5" y="13" width="7.5" height="7.5" rx="1.2" />
           <rect x="13" y="13" width="7.5" height="7.5" rx="1.2" />
+        </svg>
+      );
+    case "home":
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          className="h-full w-full"
+        >
+          <path d="m3.5 10.5 8.5-7 8.5 7" />
+          <path d="M5.5 9.5v10a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-10M9.5 20.5v-6h5v6" />
         </svg>
       );
     case "students":

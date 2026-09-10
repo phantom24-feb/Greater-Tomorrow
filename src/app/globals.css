@@ -31,3 +31,36 @@
 body {
   font-family: "Inter", sans-serif;
 }
+
+.dark body {
+  background: #101522;
+  color: #edf1f7;
+}
+
+.dark .bg-white {
+  background-color: #182033;
+}
+
+.dark .bg-bgsoft {
+  background-color: #101522;
+}
+
+.dark .text-navy,
+.dark .text-ink {
+  color: #edf1f7;
+}
+
+.dark .text-muted {
+  color: #aeb8ca;
+}
+
+.dark .border-bordersoft {
+  border-color: #354158;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #182033;
+  color: #edf1f7;
+}

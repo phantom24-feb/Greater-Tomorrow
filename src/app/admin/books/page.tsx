@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { compressAndUploadImage } from "@/lib/storage/uploadImage";
 
@@ -30,6 +29,7 @@ export default function AdminBooksPage() {
   const [isRequired, setIsRequired] = useState(true);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,19 +96,27 @@ export default function AdminBooksPage() {
       setUploadingCover(false);
     }
 
-    const { error: insertError } = await supabase.from("books").insert({
+    const bookValues = {
       class_id: classId,
       subject: subject.trim() || null,
       title: title.trim(),
       author: author.trim() || null,
-      cover_image_url: coverImageUrl,
       is_required: isRequired,
-    });
+    };
+    const result = editingId
+      ? await supabase
+          .from("books")
+          .update({ ...bookValues, ...(coverFile ? { cover_image_url: coverImageUrl } : {}) })
+          .eq("id", editingId)
+      : await supabase.from("books").insert({
+          ...bookValues,
+          cover_image_url: coverImageUrl,
+        });
 
     setLoading(false);
 
-    if (insertError) {
-      setError(insertError.message);
+    if (result.error) {
+      setError(result.error.message);
       return;
     }
 
@@ -118,7 +126,33 @@ export default function AdminBooksPage() {
     setIsRequired(true);
     setCoverFile(null);
     setCoverPreview(null);
+    setEditingId(null);
     loadData();
+  }
+
+  function startEditing(book: Book) {
+    setEditingId(book.id);
+    setClassId(book.class_id);
+    setSubject(book.subject ?? "");
+    setTitle(book.title);
+    setAuthor(book.author ?? "");
+    setIsRequired(book.is_required);
+    setCoverFile(null);
+    setCoverPreview(book.cover_image_url);
+    setError(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function cancelEditing() {
+    setEditingId(null);
+    setClassId("");
+    setSubject("");
+    setTitle("");
+    setAuthor("");
+    setIsRequired(true);
+    setCoverFile(null);
+    setCoverPreview(null);
+    setError(null);
   }
 
   async function handleDelete(id: string) {
@@ -196,12 +230,9 @@ export default function AdminBooksPage() {
           </label>
           <div className="flex items-center gap-4">
             {coverPreview && (
-              <Image
+              <img
                 src={coverPreview}
                 alt="Cover preview"
-                width={48}
-                height={64}
-                unoptimized
                 className="h-16 w-12 rounded object-cover"
               />
             )}
@@ -244,8 +275,17 @@ export default function AdminBooksPage() {
           disabled={loading}
           className="inline-flex items-center justify-center self-start rounded bg-oxblood px-5 py-2.5 text-[14.5px] font-semibold text-white transition-all hover:bg-oxblood-dark active:scale-[0.97] disabled:opacity-60 sm:col-span-2"
         >
-          {loading ? "Adding…" : "Add book"}
+          {loading ? "Saving…" : editingId ? "Update book" : "Add book"}
         </button>
+        {editingId && (
+          <button
+            type="button"
+            onClick={cancelEditing}
+            className="text-left text-[13.5px] font-medium text-oxblood hover:underline sm:col-span-2"
+          >
+            Cancel editing
+          </button>
+        )}
       </form>
 
       <h2 className="mb-4 font-display text-lg font-semibold text-navy">
@@ -272,11 +312,9 @@ export default function AdminBooksPage() {
               >
                 <td className="px-4 py-2.5">
                   {b.cover_image_url ? (
-                    <Image
+                    <img
                       src={b.cover_image_url}
                       alt={b.title}
-                      width={36}
-                      height={48}
                       className="h-12 w-9 rounded object-cover"
                     />
                   ) : (
@@ -293,6 +331,12 @@ export default function AdminBooksPage() {
                   {b.is_required ? "Required" : "Optional"}
                 </td>
                 <td className="px-4 py-2.5">
+                  <button
+                    onClick={() => startEditing(b)}
+                    className="mr-3 text-[13px] font-medium text-oxblood hover:underline"
+                  >
+                    Edit
+                  </button>
                   <button
                     onClick={() => handleDelete(b.id)}
                     className="text-[13px] font-medium text-oxblood hover:underline"
